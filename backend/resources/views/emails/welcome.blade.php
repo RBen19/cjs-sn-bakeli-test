@@ -20,7 +20,7 @@
           <!-- ===== HEADER ===== -->
           <tr>
             <td style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); padding: 44px 48px 36px; text-align:center;">
-              <img src="{{ config('app.url') }}/images/logo.png"
+              <img src="{{ env('FRONTEND_URL', config('app.url')) }}/images/logo.png"
                    alt="CSJ-SN Logo"
                    width="72" height="72"
                    style="border-radius:50%; border:3px solid rgba(255,255,255,0.3); margin-bottom:20px; display:block; margin-left:auto; margin-right:auto;" />
@@ -123,7 +123,7 @@
               <table width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td align="center">
-                    <a href="{{ config('app.url') }}"
+                    <a href="{{ env('FRONTEND_URL', config('app.url')) }}"
                        style="display:inline-block; background: linear-gradient(135deg, #16a34a, #15803d);
                               color:#ffffff; font-size:15px; font-weight:600; text-decoration:none;
                               padding: 14px 40px; border-radius:8px; letter-spacing:0.2px;">
