@@ -4,92 +4,55 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreMembreRequest;
 use App\Http\Requests\UpdateMembreRequest;
-use App\Models\Membre;
+use App\Services\MembreService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class MembreController extends Controller
 {
+    public function __construct(private readonly MembreService $membreService) {}
+
     public function index(Request $request): JsonResponse
     {
-        $query = Membre::query();
-
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('nom', 'like', "%{$search}%")
-                  ->orWhere('prenom', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('ville', 'like', "%{$search}%")
-                  ->orWhere('competences', 'like', "%{$search}%");
-            });
-        }
-
-        if ($request->filled('statut') && in_array($request->statut, ['actif', 'inactif'])) {
-            $query->where('statut', $request->statut);
-        }
-
-        $membres = $query->orderBy('created_at', 'desc')->paginate(10);
+        $membres = $this->membreService->list($request->only(['search', 'statut']));
 
         return response()->json($membres);
     }
 
     public function store(StoreMembreRequest $request): JsonResponse
     {
-        $data = $request->validated();
-        $data['created_by'] = $request->user()->id;
-        $data['statut'] = $data['statut'] ?? 'actif';
-
-        $membre = Membre::create($data);
+        $membre = $this->membreService->create($request->validated(), $request->user()->id);
 
         return response()->json([
             'message' => 'Membre ajouté avec succès.',
-            'membre' => $membre,
+            'membre'  => $membre,
         ], 201);
     }
 
     public function show(int $id): JsonResponse
     {
-        $membre = Membre::findOrFail($id);
-
-        return response()->json($membre);
+        return response()->json($this->membreService->find($id));
     }
 
     public function update(UpdateMembreRequest $request, int $id): JsonResponse
     {
-        $membre = Membre::findOrFail($id);
-        $membre->update($request->validated());
+        $membre = $this->membreService->update($id, $request->validated());
 
         return response()->json([
             'message' => 'Membre mis à jour avec succès.',
-            'membre' => $membre->fresh(),
+            'membre'  => $membre,
         ]);
     }
 
     public function destroy(int $id): JsonResponse
     {
-        $membre = Membre::findOrFail($id);
-        $membre->delete();
+        $this->membreService->delete($id);
 
-        return response()->json([
-            'message' => 'Membre supprimé avec succès.',
-        ]);
+        return response()->json(['message' => 'Membre supprimé avec succès.']);
     }
 
     public function stats(): JsonResponse
     {
-        $total = Membre::count();
-        $actifs = Membre::where('statut', 'actif')->count();
-        $inactifs = Membre::where('statut', 'inactif')->count();
-        $villes_count = Membre::whereNotNull('ville')
-            ->distinct('ville')
-            ->count('ville');
-
-        return response()->json([
-            'total' => $total,
-            'actifs' => $actifs,
-            'inactifs' => $inactifs,
-            'villes_count' => $villes_count,
-        ]);
+        return response()->json($this->membreService->stats());
     }
 }

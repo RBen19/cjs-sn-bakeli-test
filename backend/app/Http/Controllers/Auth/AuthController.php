@@ -5,57 +5,45 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
-use App\Models\User;
+use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+    public function __construct(private readonly AuthService $authService) {}
+
     public function register(RegisterRequest $request): JsonResponse
     {
-        $user = User::create([
-            'nom' => $request->nom,
-            'prenom' => $request->prenom,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
-
-        $token = $user->createToken('auth_token')->plainTextToken;
+        $result = $this->authService->register($request->validated());
 
         return response()->json([
-            'message' => 'Inscription réussie.',
-            'user' => $user,
-            'token' => $token,
+            'message' => 'Inscription réussie. Un email de bienvenue vous a été envoyé.',
+            'user'    => $result['user'],
+            'token'   => $result['token'],
         ], 201);
     }
 
     public function login(LoginRequest $request): JsonResponse
     {
-        if (!Auth::attempt($request->only('email', 'password'))) {
-            return response()->json([
-                'message' => 'Email ou mot de passe incorrect.',
-            ], 401);
-        }
+        $result = $this->authService->login($request->email, $request->password);
 
-        $user = User::where('email', $request->email)->first();
-        $token = $user->createToken('auth_token')->plainTextToken;
+        if (!$result) {
+            return response()->json(['message' => 'Email ou mot de passe incorrect.'], 401);
+        }
 
         return response()->json([
             'message' => 'Connexion réussie.',
-            'user' => $user,
-            'token' => $token,
+            'user'    => $result['user'],
+            'token'   => $result['token'],
         ]);
     }
 
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        $this->authService->logout($request->user());
 
-        return response()->json([
-            'message' => 'Déconnexion réussie.',
-        ]);
+        return response()->json(['message' => 'Déconnexion réussie.']);
     }
 
     public function me(Request $request): JsonResponse
