@@ -152,11 +152,7 @@ Un fichier `frontend/vercel.json` est inclus pour que Vue Router fonctionne corr
 
 ### CORS côté backend
 
-Ajoutez le domaine Vercel dans `backend/.env` :
-
-```dotenv
-CORS_ALLOWED_ORIGINS=http://localhost:5173,https://cjs-sn-bakeli-test.vercel.app
-FRONTEND_URL=https://cjs-sn-bakeli-test.vercel.app
+### NOT DEPLOYED YET
 ```
 
 Le bouton de l'email de bienvenue pointera automatiquement vers `FRONTEND_URL`.
