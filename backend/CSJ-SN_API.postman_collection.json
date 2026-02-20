@@ -1,0 +1,545 @@
+{
+  "info": {
+    "name": "CSJ-SN API",
+    "description": "Collection de tests pour l'API du Consortium Jeunesse Sénégal.\n\n**Workflow recommandé :**\n1. Exécuter `Login` → le token est automatiquement stocké dans la variable `token`\n2. Toutes les requêtes protégées l'utilisent via `Authorization: Bearer {{token}}`",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "membre_id",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('token', json.token);",
+                  "    pm.test('Inscription réussie - token récupéré', () => {",
+                  "        pm.expect(json.token).to.be.a('string');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prenom\": \"Test\",\n  \"nom\": \"Utilisateur\",\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Crée un nouveau compte utilisateur. Le token est automatiquement stocké dans `{{token}}`."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"message\": \"Inscription réussie.\",\n  \"user\": {\n    \"id\": 2,\n    \"nom\": \"Utilisateur\",\n    \"prenom\": \"Test\",\n    \"email\": \"test@example.com\",\n    \"created_at\": \"2026-02-20T10:00:00.000000Z\",\n    \"updated_at\": \"2026-02-20T10:00:00.000000Z\"\n  },\n  \"token\": \"2|abc123...\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('token', json.token);",
+                  "    pm.test('Connexion réussie - token récupéré', () => {",
+                  "        pm.expect(json.token).to.be.a('string');",
+                  "    });",
+                  "    console.log('Token:', json.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@csj-sn.org\",\n  \"password\": \"password\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Connecte un utilisateur existant. Utilise le compte admin seedé par défaut.\n\nLe token est automatiquement stocké dans `{{token}}`."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"message\": \"Connexion réussie.\",\n  \"user\": {\n    \"id\": 1,\n    \"nom\": \"Admin\",\n    \"prenom\": \"CSJ\",\n    \"email\": \"admin@csj-sn.org\"\n  },\n  \"token\": \"1|abc123xyz...\"\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"message\": \"Email ou mot de passe incorrect.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Me (profil connecté)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Retourne les informations de l'utilisateur actuellement connecté."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"id\": 1,\n  \"nom\": \"Admin\",\n  \"prenom\": \"CSJ\",\n  \"email\": \"admin@csj-sn.org\",\n  \"email_verified_at\": null,\n  \"created_at\": \"2026-02-20T09:00:00.000000Z\",\n  \"updated_at\": \"2026-02-20T09:00:00.000000Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    pm.collectionVariables.set('token', '');",
+                  "    pm.test('Déconnexion réussie - token effacé', () => {",
+                  "        pm.expect(pm.response.json().message).to.include('Déconnexion');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "Révoque le token actuel. La variable `{{token}}` est vidée automatiquement."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"message\": \"Déconnexion réussie.\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Membres",
+      "item": [
+        {
+          "name": "Statistiques",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/membres/stats",
+              "host": ["{{base_url}}"],
+              "path": ["membres", "stats"]
+            },
+            "description": "Retourne les statistiques globales : total, actifs, inactifs, nombre de villes."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"total\": 8,\n  \"actifs\": 6,\n  \"inactifs\": 2,\n  \"villes_count\": 5\n}"
+            }
+          ]
+        },
+        {
+          "name": "Lister tous les membres",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/membres?page=1",
+              "host": ["{{base_url}}"],
+              "path": ["membres"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "search", "value": "", "disabled": true },
+                { "key": "statut", "value": "", "disabled": true }
+              ]
+            },
+            "description": "Liste paginée des membres (10 par page).\n\n**Paramètres optionnels :**\n- `search` — recherche dans nom, prénom, email, ville, compétences\n- `statut` — `actif` ou `inactif`\n- `page` — numéro de page"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"current_page\": 1,\n  \"data\": [\n    {\n      \"id\": 1,\n      \"nom\": \"Diallo\",\n      \"prenom\": \"Aminata\",\n      \"email\": \"aminata.diallo@email.com\",\n      \"telephone\": \"+221 77 123 45 67\",\n      \"ville\": \"Dakar\",\n      \"competences\": \"Leadership, Gestion de projet, Communication\",\n      \"statut\": \"actif\",\n      \"date_naissance\": \"1998-03-15\",\n      \"adresse\": \"Plateau, Dakar\",\n      \"created_by\": 1,\n      \"age\": 27,\n      \"nom_complet\": \"Aminata Diallo\",\n      \"created_at\": \"2026-02-20T09:00:00.000000Z\",\n      \"updated_at\": \"2026-02-20T09:00:00.000000Z\"\n    }\n  ],\n  \"first_page_url\": \"http://localhost:8000/api/membres?page=1\",\n  \"last_page\": 1,\n  \"last_page_url\": \"http://localhost:8000/api/membres?page=1\",\n  \"per_page\": 10,\n  \"total\": 8\n}"
+            }
+          ]
+        },
+        {
+          "name": "Rechercher des membres",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/membres?search=Dakar",
+              "host": ["{{base_url}}"],
+              "path": ["membres"],
+              "query": [
+                { "key": "search", "value": "Dakar" }
+              ]
+            },
+            "description": "Recherche plein texte dans les champs : nom, prénom, email, ville, compétences."
+          }
+        },
+        {
+          "name": "Filtrer par statut (actifs)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/membres?statut=actif",
+              "host": ["{{base_url}}"],
+              "path": ["membres"],
+              "query": [
+                { "key": "statut", "value": "actif" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filtrer par statut (inactifs)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/membres?statut=inactif",
+              "host": ["{{base_url}}"],
+              "path": ["membres"],
+              "query": [
+                { "key": "statut", "value": "inactif" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Voir un membre",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/membres/{{membre_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["membres", "{{membre_id}}"]
+            },
+            "description": "Retourne les détails complets d'un membre, incluant l'âge calculé."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"id\": 1,\n  \"nom\": \"Diallo\",\n  \"prenom\": \"Aminata\",\n  \"email\": \"aminata.diallo@email.com\",\n  \"telephone\": \"+221 77 123 45 67\",\n  \"ville\": \"Dakar\",\n  \"competences\": \"Leadership, Gestion de projet, Communication\",\n  \"statut\": \"actif\",\n  \"date_naissance\": \"1998-03-15\",\n  \"adresse\": \"Plateau, Dakar\",\n  \"created_by\": 1,\n  \"age\": 27,\n  \"nom_complet\": \"Aminata Diallo\",\n  \"created_at\": \"2026-02-20T09:00:00.000000Z\",\n  \"updated_at\": \"2026-02-20T09:00:00.000000Z\"\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "body": "{\n  \"message\": \"No query results for model [App\\\\Models\\\\Membre] 99\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Créer un membre",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('membre_id', json.membre.id);",
+                  "    pm.test('Membre créé - ID stocké', () => {",
+                  "        pm.expect(json.membre.id).to.be.a('number');",
+                  "    });",
+                  "    console.log('Nouveau membre ID:', json.membre.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prenom\": \"Mariama\",\n  \"nom\": \"Ba\",\n  \"email\": \"mariama.ba@email.com\",\n  \"telephone\": \"+221 77 999 88 77\",\n  \"ville\": \"Dakar\",\n  \"competences\": \"Communication, Éducation, Mentorat\",\n  \"statut\": \"actif\",\n  \"date_naissance\": \"2000-06-15\",\n  \"adresse\": \"Sacré-Cœur, Dakar\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/membres",
+              "host": ["{{base_url}}"],
+              "path": ["membres"]
+            },
+            "description": "Crée un nouveau membre. L'ID du membre créé est automatiquement stocké dans `{{membre_id}}`.\n\n**Champs obligatoires :** `prenom`, `nom`, `email`\n\n**Champs optionnels :** `telephone`, `ville`, `competences`, `statut` (défaut: `actif`), `date_naissance`, `adresse`"
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"message\": \"Membre ajouté avec succès.\",\n  \"membre\": {\n    \"id\": 9,\n    \"nom\": \"Ba\",\n    \"prenom\": \"Mariama\",\n    \"email\": \"mariama.ba@email.com\",\n    \"telephone\": \"+221 77 999 88 77\",\n    \"ville\": \"Dakar\",\n    \"competences\": \"Communication, Éducation, Mentorat\",\n    \"statut\": \"actif\",\n    \"date_naissance\": \"2000-06-15\",\n    \"adresse\": \"Sacré-Cœur, Dakar\",\n    \"created_by\": 1,\n    \"age\": 25,\n    \"nom_complet\": \"Mariama Ba\",\n    \"created_at\": \"2026-02-20T10:30:00.000000Z\",\n    \"updated_at\": \"2026-02-20T10:30:00.000000Z\"\n  }\n}"
+            },
+            {
+              "name": "422 Validation Error",
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "body": "{\n  \"message\": \"The email has already been taken.\",\n  \"errors\": {\n    \"email\": [\"Cette adresse email est déjà utilisée.\"]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Modifier un membre",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"telephone\": \"+221 77 000 11 22\",\n  \"ville\": \"Saint-Louis\",\n  \"statut\": \"inactif\",\n  \"competences\": \"Leadership, Communication, Nouvelles compétences\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/membres/{{membre_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["membres", "{{membre_id}}"]
+            },
+            "description": "Met à jour un membre existant. Seuls les champs envoyés sont modifiés (PATCH-like avec PUT)."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"message\": \"Membre mis à jour avec succès.\",\n  \"membre\": {\n    \"id\": 1,\n    \"nom\": \"Diallo\",\n    \"prenom\": \"Aminata\",\n    \"email\": \"aminata.diallo@email.com\",\n    \"telephone\": \"+221 77 000 11 22\",\n    \"ville\": \"Saint-Louis\",\n    \"statut\": \"inactif\",\n    \"competences\": \"Leadership, Communication, Nouvelles compétences\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Supprimer un membre",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/membres/{{membre_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["membres", "{{membre_id}}"]
+            },
+            "description": "Supprime définitivement un membre. Utilise l'ID stocké dans `{{membre_id}}`."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"message\": \"Membre supprimé avec succès.\"\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "body": "{\n  \"message\": \"No query results for model [App\\\\Models\\\\Membre] 99\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Validation — cas d'erreurs",
+      "item": [
+        {
+          "name": "Login - mauvais mot de passe",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@csj-sn.org\",\n  \"password\": \"mauvais_mdp\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Doit retourner 401."
+          }
+        },
+        {
+          "name": "Créer membre - email déjà utilisé",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prenom\": \"Test\",\n  \"nom\": \"Doublon\",\n  \"email\": \"aminata.diallo@email.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/membres",
+              "host": ["{{base_url}}"],
+              "path": ["membres"]
+            },
+            "description": "Doit retourner 422 avec message d'erreur sur l'email."
+          }
+        },
+        {
+          "name": "Créer membre - champs obligatoires manquants",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"telephone\": \"+221 77 000 00 00\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/membres",
+              "host": ["{{base_url}}"],
+              "path": ["membres"]
+            },
+            "description": "Doit retourner 422 avec erreurs sur nom, prenom, email."
+          }
+        },
+        {
+          "name": "Accès sans token",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/membres",
+              "host": ["{{base_url}}"],
+              "path": ["membres"]
+            },
+            "description": "Doit retourner 401 (pas de token Bearer)."
+          }
+        },
+        {
+          "name": "Voir membre inexistant",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/membres/9999",
+              "host": ["{{base_url}}"],
+              "path": ["membres", "9999"]
+            },
+            "description": "Doit retourner 404."
+          }
+        }
+      ]
+    }
+  ]
+}
