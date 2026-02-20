@@ -117,6 +117,52 @@ Le frontend sera disponible sur **http://localhost:5173**
 
 ---
 
+## Déploiement Frontend — Vercel
+
+Le frontend est déployé sur **https://cjs-sn-bakeli-test.vercel.app**
+
+### Paramètres Vercel (à configurer dans le dashboard)
+
+| Paramètre | Valeur |
+|---|---|
+| **Framework Preset** | Vite |
+| **Root Directory** | `frontend` |
+| **Build Command** | `npm run build` |
+| **Output Directory** | `dist` |
+
+### Variable d'environnement Vercel
+
+Dans **Settings → Environment Variables** de votre projet Vercel :
+
+| Nom | Valeur |
+|---|---|
+| `VITE_API_URL` | `https://votre-backend-deploye.com/api` |
+
+> Sans cette variable, le frontend en production ne pourra pas appeler l'API.
+
+### Routing SPA
+
+Un fichier `frontend/vercel.json` est inclus pour que Vue Router fonctionne correctement sur toutes les routes (refresh sur `/dashboard`, `/connexion`, etc.) :
+
+```json
+{
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
+```
+
+### CORS côté backend
+
+Ajoutez le domaine Vercel dans `backend/.env` :
+
+```dotenv
+CORS_ALLOWED_ORIGINS=http://localhost:5173,https://cjs-sn-bakeli-test.vercel.app
+FRONTEND_URL=https://cjs-sn-bakeli-test.vercel.app
+```
+
+Le bouton de l'email de bienvenue pointera automatiquement vers `FRONTEND_URL`.
+
+---
+
 ## Configuration email (Gmail)
 
 L'application envoie un email de bienvenue lors de chaque inscription.
